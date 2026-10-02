@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>☁ 我的云盘 - 网页版</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system}
+body{min-height:100vh;background:#1e1e28;color:#fff;font-size:14px}
+.hide{display:none!important}
+.btn{background:#2f3a52;color:#fff;padding:8px 14px;border:none;border-radius:6px;cursor:pointer;transition:.2s;font-size:13px}
+.btn:hover{background:#00b4ff}
+.btn-primary{background:#00b4ff}
+.btn-primary:hover{background:#00d0ff}
+.btn-danger{background:#ff4444}
+.btn-danger:hover{background:#ff6666}
+.btn:disabled{background:#3a3a48;color:#888;cursor:not-allowed}
+.inp{background:#252536;color:#fff;border:none;padding:8px 12px;border-radius:6px;outline:none;font-size:13px;width:100%}
+.inp:focus{background:#2a2a3c}
+.login-wrap{width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.login-card{width:360px;background:#252536;padding:32px;border-radius:12px;box-shadow:0 12px 48px rgba(0,0,0,0.5)}
+.login-card h2{text-align:center;margin-bottom:24px;color:#00b4ff}
+.login-card .inp{margin-bottom:12px}
+.login-card .btn{width:100%;margin-bottom:8px}
+.app{display:flex;min-height:100vh}
+.sidebar{width:210px;background:#16161e;padding:16px 10px;flex-shrink:0;display:flex;flex-direction:column;gap:4px}
+.sidebar h1{font-size:16px;padding:8px 12px 14px;color:#00b4ff}
+.sidebar .btn{text-align:left;background:transparent;padding:10px 14px}
+.sidebar .btn:hover{background:#2f3a52}
+.sidebar .btn.active{background:#00b4ff}
+.sidebar .coin-box{background:#252536;padding:10px;border-radius:6px;margin:8px 4px;font-size:12px;color:#ffcc00;font-weight:bold}
+.sidebar .account-box{background:#252536;padding:10px;border-radius:6px;margin:0 4px 8px;font-size:12px;cursor:pointer}
+.main{flex:1;padding:20px;overflow:auto}
+.topbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.topbar h2{font-size:18px;flex:1}
+.card{background:#252536;border-radius:8px;padding:16px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border-bottom:1px solid #2f3a52;text-align:left;font-size:13px}
+th{color:#8fa8c8;font-weight:normal}
+tr:hover td{background:#2a2a3c}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:999;padding:16px}
+.modal-inner{background:#252536;border-radius:12px;padding:24px;max-width:600px;width:100%;max-height:85vh;overflow:auto}
+.modal-inner h3{color:#00b4ff;margin-bottom:16px}
+.admin-dark{background:rgba(0,0,0,0.92)!important}
+.admin-dark .modal-inner{background:#0a0a0f;border:1px solid #1a1a24}
+.admin-dark h3{color:#8a8a9a!important;letter-spacing:3px;text-align:center;font-weight:400}
+.admin-dark .inp{background:#12121a;border:1px solid #1e1e28;color:#8a8a9a}
+.admin-dark .inp:focus{border-color:#2a2a3a;color:#b0b0c0;background:#12121a}
+.admin-dark .btn{background:#1a1a24;color:#6a6a7a;border:1px solid #1e1e28}
+.admin-dark .btn:hover{background:#22222e;color:#b0b0c0}
+.admin-dark .modal-inner .hint{color:#4a4a5a;font-size:11px;text-align:center;margin-bottom:12px}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold}
+.tag-green{background:#3ddc84;color:#000}
+.tag-yellow{background:#ffcc00;color:#000}
+.tag-red{background:#ff4444}
+.tag-blue{background:#00b4ff;color:#000}
+.progress{background:#1e1e28;border-radius:7px;height:14px;overflow:hidden}
+.progress-bar{background:#3ddc84;height:100%;border-radius:7px;transition:.3s}
+.version-item{padding:8px 12px;margin:6px 0;background:#2a2a3c;border-radius:6px;border-left:3px solid #00b4ff}
+.version-item h4{color:#00b4ff;font-size:13px;margin-bottom:2px}
+.version-item p{color:#aaa;font-size:12px}
+#adminVersionTitle{cursor:pointer;user-select:none}
+.empty{text-align:center;color:#666;padding:32px}
+.vip-card{background:#252536;border-radius:8px;padding:14px;border-left:4px solid #00b4ff;width:220px}
+.vip-card.svip{border-left-color:#ffcc00}
+.vip-card h4{margin-bottom:6px;font-size:14px}
+.vip-card .price{color:#ffcc00;font-weight:bold;font-size:14px;margin:6px 0}
+.task-item{background:#252536;border-radius:8px;padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.task-item .info{flex:1}
+.task-item .reward{color:#00b4ff;font-weight:bold;font-size:15px;margin-right:12px}
+</style>
+</head>
+<body>
+
+<!-- 登录页 -->
+<div class="login-wrap" id="loginPage">
+  <div class="login-card">
+    <h2>☁ 我的云盘</h2>
+    <input class="inp" id="loginUser" placeholder="用户名">
+    <input class="inp" id="loginPwd" type="password" placeholder="密码">
+    <button class="btn btn-primary" onclick="doLogin()">登 录</button>
+    <button class="btn" onclick="doRegister()">注 册</button>
+    <div style="text-align:center;font-size:11px;color:#666;margin-top:12px">
+      数据保存在本浏览器，请勿清除缓存
+    </div>
+  </div>
+</div>
+
+<!-- 主界面 -->
+<div class="app hide" id="appPage">
+  <div class="sidebar">
+    <h1>☁ 我的云盘</h1>
+    <div class="account-box" id="accountBox" onclick="showAccountMenu()">未登录</div>
+    <div class="coin-box" id="coinBox">💰 0 金币</div>
+    <button class="btn" data-page="files" onclick="switchPage('files')">📁 我的文件</button>
+    <button class="btn" data-page="transfer" onclick="switchPage('transfer')">📥 传输记录</button>
+    <button class="btn" data-page="share" onclick="switchPage('share')">🔗 我的分享</button>
+    <button class="btn" data-page="trash" onclick="switchPage('trash')">🗑 回收站</button>
+    <button class="btn" data-page="task" onclick="switchPage('task')">💰 任务中心</button>
+    <button class="btn" data-page="feedback" onclick="switchPage('feedback')">📬 反馈中心</button>
+    <button class="btn" data-page="vip" onclick="switchPage('vip')">💎 升级会员</button>
+    <button class="btn" data-page="about" onclick="switchPage('about')">ℹ 关于</button>
+    <button class="btn" data-page="settings" onclick="switchPage('settings')">⚙ 设置</button>
+  </div>
+
+  <div class="main">
+    <!-- 我的文件 -->
+    <div id="page-files">
+      <div class="topbar">
+        <h2>📁 我的文件</h2>
+        <input type="file" id="fileInput" multiple style="display:none" onchange="handleUpload(event)">
+        <input type="file" id="folderInput" webkitdirectory multiple style="display:none" onchange="handleFolderUpload(event)">
+        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">⬆ 上传文件</button>
+        <button class="btn btn-primary" onclick="document.getElementById('folderInput').click()">📁 上传文件夹</button>
+        <button class="btn" onclick="newFolder()">➕ 新建文件夹</button>
+        <button class="btn" onclick="refreshFiles()">🔄 刷新</button>
+      </div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div id="quotaInfo" style="font-size:13px">容量：0 / 0</div>
+          <button class="btn" onclick="switchPage('vip')">升级会员</button>
+        </div>
+        <div class="progress" style="margin-top:8px"><div class="progress-bar" id="quotaBar" style="width:0%"></div></div>
+      </div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div id="breadcrumb" style="color:#00b4ff;font-size:13px">🏠 根目录</div>
+          <button class="btn" id="backBtn" onclick="goBack()" style="display:none">⬅ 返回上级</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table id="fileTable">
+          <thead><tr><th>名称</th><th style="width:100px">大小</th><th style="width:160px">修改时间</th><th style="width:260px">操作</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 传输记录 -->
+    <div id="page-transfer" class="hide">
+      <div class="topbar">
+        <h2>📥 传输记录</h2>
+        <button class="btn" onclick="refreshTransfers()">🔄 刷新</button>
+        <button class="btn btn-danger" onclick="clearTransfers()">清空记录</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table id="transferTable">
+          <thead><tr><th>类型</th><th>名称</th><th style="width:100px">大小</th><th style="width:180px">时间</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 我的分享 -->
+    <div id="page-share" class="hide">
+      <div class="topbar">
+        <h2>🔗 我的分享</h2>
+        <button class="btn" onclick="refreshShares()">🔄 刷新</button>
+      </div>
+      <div class="card">
+        <div class="row">
+          <input class="inp" id="shareCodeInput" placeholder="输入分享码接收" style="flex:1">
+          <button class="btn btn-primary" onclick="useShareCode()">接收</button>
+        </div>
+        <p style="color:#8fa8c8;font-size:12px;margin-top:8px">
+          ⚠ 数据不共享，分享码只在同一浏览器有效
+        </p>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table id="shareTable">
+          <thead><tr><th>分享码</th><th>文件</th><th style="width:180px">创建时间</th><th style="width:100px">操作</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 回收站 -->
+    <div id="page-trash" class="hide">
+      <div class="topbar">
+        <h2>🗑 回收站</h2>
+        <button class="btn" onclick="refreshTrash()">🔄 刷新</button>
+        <button class="btn btn-danger" onclick="emptyTrash()">清空回收站</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table id="trashTable">
+          <thead><tr><th>名称</th><th style="width:100px">大小</th><th style="width:180px">删除时间</th><th style="width:200px">操作</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 任务中心 -->
+    <div id="page-task" class="hide">
+      <div class="topbar">
+        <h2>💰 任务中心</h2>
+        <div id="taskProgress" style="color:#8fa8c8;font-size:12px"></div>
+      </div>
+      <div id="taskList"></div>
+    </div>
+
+    <!-- 反馈中心 -->
+    <div id="page-feedback" class="hide">
+      <div class="topbar">
+        <h2>📬 反馈中心</h2>
+        <button class="btn btn-primary" onclick="submitFeedback('建议')">提交建议 +800</button>
+        <button class="btn btn-primary" onclick="submitFeedback('BUG')">提交BUG +1200</button>
+      </div>
+      <div id="feedbackList"></div>
+    </div>
+
+    <!-- 升级会员 -->
+    <div id="page-vip" class="hide">
+      <div class="topbar">
+        <h2>💎 升级会员</h2>
+        <div id="vipInfo" style="color:#ffcc00;font-weight:bold"></div>
+      </div>
+      <div class="row" style="margin-bottom:12px">
+        <button class="btn" id="tabVIP" onclick="switchVipTab('VIP')">👑 VIP</button>
+        <button class="btn" id="tabSVIP" onclick="switchVipTab('SVIP')">💎 SVIP</button>
+      </div>
+      <div id="vipList" class="row" style="align-items:stretch"></div>
+    </div>
+
+    <!-- 关于 -->
+    <div id="page-about" class="hide">
+      <div class="topbar"><h2>ℹ 关于</h2></div>
+      <div class="card">
+        <p>☁ <b>我的云盘 网页版 V1.0</b></p>
+        <p style="color:#aaa;font-size:12px;margin-top:8px">
+          数据保存在本浏览器 IndexedDB，勿清缓存。<br>
+          浏览器存储上限：一般 50MB ~ 几 GB，取决于浏览器。
+        </p>
+      </div>
+      <div class="card">
+        <h3 id="adminVersionTitle" style="color:#00b4ff;margin-bottom:12px">📜 历史版本</h3>
+        <div id="versionList"></div>
+      </div>
+    </div>
+
+    <!-- 设置 -->
+    <div id="page-settings" class="hide">
+      <div class="topbar"><h2>⚙ 设置</h2></div>
+      <div class="card">
+        <button class="btn" style="width:100%;margin-bottom:8px" onclick="changePassword()">修改密码</button>
+        <button class="btn" style="width:100%;margin-bottom:8px" onclick="doLogout()">退出登录</button>
+        <button class="btn btn-danger" style="width:100%" onclick="deleteAccount()">⚠ 注销账号</button>
+      </div>
+      <div class="card">
+        <p style="color:#ffcc00;font-size:12px">
+          ⚠ 提示：数据保存在浏览器，换设备/清缓存会导致数据丢失。<br>
+          建议定期导出重要文件保存到本地。
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 通用弹窗容器 -->
+<div id="modalRoot"></div>
+
+<script>
+// ==================== 常量 ====================
+const APP_NAME = "我的云盘 网页版";
+const APP_VERSION = "v1.0";
+const ADMIN_PWD = "qwezxc 123";
+const DB_NAME = "cloudDiskDB";
+const DB_VERSION = 1;
+const STORE_FILES = "files";
+const LS_USERS = "cloud_users";
+const LS_DATA = "cloud_data";
+const LS_SESSION = "cloud_session";
+
+const VERSION_HISTORY = [
+  {v:"v1.0", d:"初版：网页版云盘，本地存储，含管理员后台"},
+];
+
+// ==================== IndexedDB ====================
+let _db = null;
+function openDB() {
+  return new Promise((resolve, reject) => {
+    if (_db) return resolve(_db);
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_FILES)) {
+        db.createObjectStore(STORE_FILES);
+      }
+    };
+    req.onsuccess = e => { _db = e.target.result; resolve(_db); };
+    req.onerror = e => reject(e);
+  });
+}
+async function idbPut(key, value) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_FILES, "readwrite");
+    tx.objectStore(STORE_FILES).put(value, key);
+    tx.oncomplete = resolve; tx.onerror = reject;
+  });
+}
+async function idbGet(key) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_FILES, "readonly");
+    const req = tx.objectStore(STORE_FILES).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = reject;
+  });
+}
+async function idbDel(key) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_FILES, "readwrite");
+    tx.objectStore(STORE_FILES).delete(key);
+    tx.oncomplete = resolve; tx.onerror = reject;
+  });
+}
+
+// ==================== localStorage ====================
+function loadUsers() {
+  try { return JSON.parse(localStorage.getItem(LS_USERS)) || {}; } catch { return {}; }
+}
+function saveUsers(d) { localStorage.setItem(LS_USERS, JSON.stringify(d)); }
+
+function defaultData() {
+  return {
+    coins: {}, filesMeta: {}, shares: {}, transfers: {}, feedbacks: [],
+    codes: {}, actions: {}, banned: [], invite_codes: [], logs: []
+  };
+}
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(LS_DATA)) || defaultData(); } catch { return defaultData(); }
+}
+function saveData(d) { localStorage.setItem(LS_DATA, JSON.stringify(d)); }
+
+let DATA = loadData();
+let CURRENT_USER = localStorage.getItem(LS_SESSION) || null;
+
+function saveAll() { saveData(DATA); }
+
+function ensureCoins(user) {
+  if (!DATA.coins[user]) {
+    DATA.coins[user] = {
+      user_coins: 500, vip_level: "免费用户", history: [],
+      done_once: [], today_earned: 0, today_date: ""
+    };
+    DATA.coins[user].history.push({time:new Date().toISOString(), task:"注册赠送", reward:500});
+  }
+  const today = new Date().toISOString().slice(0,10);
+  if (DATA.coins[user].today_date !== today) {
+    DATA.coins[user].today_earned = 0;
+    DATA.coins[user].today_date = today;
+  }
+  return DATA.coins[user];
+}
+
+function ensureFilesMeta(user) {
+  if (!DATA.filesMeta[user]) DATA.filesMeta[user] = [];
+  return DATA.filesMeta[user];
+}
+
+// ==================== 配额 ====================
+const QUOTA = {
+  "免费用户":{quota:50*1024**3, speed:10},
+  "VIP 1":{quota:50*1024**3, speed:100, price:10000},
+  "VIP 2":{quota:100*1024**3, speed:300, price:20000},
+  "VIP 3":{quota:500*1024**3, speed:500, price:35000},
+  "VIP 4":{quota:1*1024**4, speed:1024, price:55000},
+  "VIP 5":{quota:2*1024**4, speed:2048, price:80000},
+  "VIP 6":{quota:4*1024**4, speed:5120, price:120000},
+  "VIP 7":{quota:6*1024**4, speed:6144, price:180000},
+  "VIP 8":{quota:8*1024**4, speed:7168, price:260000},
+  "VIP 9":{quota:10*1024**4, speed:8192, price:380000},
+  "VIP 10":{quota:15*1024**4, speed:9216, price:550000},
+  "SVIP 1":{quota:30*1024**4, speed:51200, price:1000000},
+  "SVIP 2":{quota:50*1024**4, speed:51200, price:1500000},
+  "SVIP 3":{quota:80*1024**4, speed:51200, price:2200000},
+  "SVIP 4":{quota:100*1024**4, speed:51200, price:3000000},
+  "SVIP 5":{quota:200*1024**4, speed:51200, price:4000000},
+  "SVIP 6":{quota:300*1024**4, speed:-1, price:5500000},
+  "SVIP 7":{quota:500*1024**4, speed:-1, price:7000000},
+  "SVIP 8":{quota:800*1024**4, speed:-1, price:9000000},
+  "SVIP 9":{quota:1024*1024**4, speed:-1, price:12000000},
+  "SVIP 10":{quota:2048*1024**4, speed:-1, price:16000000},
+  "管理员":{quota:-1, speed:-1}
+};
+function getQuota(level) { return QUOTA[level] || QUOTA["免费用户"]; }
+function fmtSize(n) {
+  if (n === -1 || n === null || n === undefined) return "无限";
+  if (n < 1024) return n + " B";
+  if (n < 1024*1024) return (n/1024).toFixed(1) + " KB";
+  if (n < 1024**3) return (n/1024/1024).toFixed(1) + " MB";
+  if (n < 1024**4) return (n/1024**3).toFixed(2) + " GB";
+  return (n/1024**4).toFixed(2) + " TB";
+}
+function speedStr(kb) {
+  if (kb === -1 || kb === 0) return "无限速";
+  if (kb < 1024) return kb + " KB/s";
+  return (kb/1024).toFixed(1) + " MB/s";
+}
+
+// ==================== 通用 UI ====================
+function toast(msg) {
+  const d = document.createElement("div");
+  d.style.cssText = "position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#00b4ff;color:#fff;padding:10px 20px;border-radius:6px;z-index:9999;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.3);max-width:80%";
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 2200);
+}
+function modal(html, cls="") {
+  const root = document.getElementById("modalRoot");
+  const wrap = document.createElement("div");
+  wrap.className = "modal " + cls;
+  wrap.innerHTML = `<div class="modal-inner">${html}</div>`;
+  wrap.onclick = e => { if (e.target === wrap) wrap.remove(); };
+  root.appendChild(wrap);
+  return wrap;
+}
+function closeModal(el) { el.remove(); }
+function escHtml(s) { return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]); }
+function mkBtn(text, fn, cls="") {
+  const b = document.createElement("button");
+  b.className = "btn " + cls; b.textContent = text;
+  b.style.marginRight = "4px"; b.style.marginBottom = "4px";
+  b.onclick = fn;
+  return b;
+}
+
+// ==================== 登录/注册 ====================
+function doLogin() {
+  const u = document.getElementById("loginUser").value.trim();
+  const p = document.getElementById("loginPwd").value.trim();
+  if (!u || !p) return toast("请输入用户名和密码");
+  const users = loadUsers();
+  if (!users[u]) return toast("用户不存在");
+  if (users[u].password !== p) return toast("密码错误");
+  if (DATA.banned.includes(u)) return toast("该账号已被封禁");
+  CURRENT_USER = u;
+  localStorage.setItem(LS_SESSION, u);
+  ensureCoins(u);
+  ensureFilesMeta(u);
+  saveAll();
+  enterApp();
+}
+function doRegister() {
+  const u = document.getElementById("loginUser").value.trim();
+  const p = document.getElementById("loginPwd").value.trim();
+  if (!u || !p) return toast("请输入用户名和密码");
+  if (u.length < 2) return toast("用户名至少 2 个字符");
+  if (p.length < 3) return toast("密码至少 3 个字符");
+  const users = loadUsers();
+  if (users[u]) return toast("用户名已存在");
+  users[u] = { password: p, created: new Date().toISOString() };
+  saveUsers(users);
+  ensureCoins(u);
+  ensureFilesMeta(u);
+  saveAll();
+  CURRENT_USER = u;
+  localStorage.setItem(LS_SESSION, u);
+  toast("注册成功，赠送 500 金币");
+  enterApp();
+}
+function doLogout() {
+  CURRENT_USER = null;
+  localStorage.removeItem(LS_SESSION);
+  document.getElementById("appPage").classList.add("hide");
+  document.getElementById("loginPage").classList.remove("hide");
+  document.getElementById("loginUser").value = "";
+  document.getElementById("loginPwd").value = "";
+}
+function enterApp() {
+  document.getElementById("loginPage").classList.add("hide");
+  document.getElementById("appPage").classList.remove("hide");
+  refreshAll();
+  switchPage("files");
+}
+
+// ==================== 页面切换 ====================
+let CUR_PAGE = "files";
+function switchPage(p) {
+  CUR_PAGE = p;
+  document.querySelectorAll(".sidebar .btn[data-page]").forEach(b => {
+    b.classList.toggle("active", b.dataset.page === p);
+  });
+  ["files","transfer","share","trash","task","feedback","vip","about","settings"].forEach(x => {
+    const el = document.getElementById("page-" + x);
+    if (el) el.classList.toggle("hide", x !== p);
+  });
+  if (p === "files") refreshFiles();
+  if (p === "transfer") refreshTransfers();
+  if (p === "share") refreshShares();
+  if (p === "trash") refreshTrash();
+  if (p === "task") renderTasks();
+  if (p === "feedback") renderFeedbacks();
+  if (p === "vip") renderVip();
+  if (p === "about") renderVersions();
+}
+function refreshAll() {
+  const u = CURRENT_USER;
+  if (!u) return;
+  const coins = ensureCoins(u);
+  document.getElementById("coinBox").textContent = "💰 " + coins.user_coins.toLocaleString() + " 金币";
+  document.getElementById("accountBox").textContent = `👤 ${u}（${coins.vip_level}）`;
+  saveAll();
+}
+
+// ==================== 我的文件 ====================
+let CUR_DIR = [];
+function refreshFiles() {
+  if (!CURRENT_USER) return;
+  const u = CURRENT_USER;
+  const coins = ensureCoins(u);
+  const quota = getQuota(coins.vip_level);
+  const meta = ensureFilesMeta(u);
+  const used = meta.filter(f => !f.deleted && f.type === "file")
+                    .reduce((s, f) => s + (f.size || 0), 0);
+  document.getElementById("quotaInfo").textContent =
+    `容量：${fmtSize(used)} / ${fmtSize(quota.quota)}  |  速度：${speedStr(quota.speed)}`;
+  const pct = quota.quota === -1 ? 0 : Math.min(100, used * 100 / quota.quota);
+  const bar = document.getElementById("quotaBar");
+  bar.style.width = pct + "%";
+  bar.style.background = pct >= 95 ? "#ff4444" : (pct >= 80 ? "#ffcc00" : "#3ddc84");
+
+  document.getElementById("breadcrumb").textContent =
+    "🏠 根目录" + (CUR_DIR.length ? " / " + CUR_DIR.join(" / ") : "");
+  document.getElementById("backBtn").style.display = CUR_DIR.length ? "" : "none";
+
+  const tbody = document.querySelector("#fileTable tbody");
+  tbody.innerHTML = "";
+  const files = meta.filter(f =>
+    !f.deleted &&
+    JSON.stringify(f.path || []) === JSON.stringify(CUR_DIR)
+  ).sort((a, b) => {
+    if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
+    return (a.name || "").localeCompare(b.name || "");
+  });
+  if (!files.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="empty">此文件夹为空，点击上方按钮上传</td></tr>`;
+    return;
+  }
+  files.forEach(f => {
+    const tr = document.createElement("tr");
+    const icon = f.type === "dir" ? "📁" : "📄";
+    tr.innerHTML = `
+      <td>${icon} ${escHtml(f.name)}</td>
+      <td>${f.type === "dir" ? "—" : fmtSize(f.size||0)}</td>
+      <td>${(f.uploaded||"").slice(0,19).replace("T"," ")}</td>
+      <td></td>
+    `;
+    const cell = tr.children[3];
+    if (f.type === "dir") {
+      cell.appendChild(mkBtn("打开", () => { CUR_DIR.push(f.name); refreshFiles(); }));
+    } else {
+      cell.appendChild(mkBtn("下载", () => downloadFile(f)));
+      cell.appendChild(mkBtn("分享", () => shareFile(f)));
+    }
+    cell.appendChild(mkBtn("重命名", () => renameFile(f)));
+    cell.appendChild(mkBtn("删除", () => deleteFile(f), "btn-danger"));
+    tbody.appendChild(tr);
+  });
+}
+function goBack() { if (CUR_DIR.length) { CUR_DIR.pop(); refreshFiles(); } }
+
+function newFolder() {
+  const name = prompt("文件夹名称：");
+  if (!name || !name.trim()) return;
+  const meta = ensureFilesMeta(CURRENT_USER);
+  if (meta.some(f => !f.deleted && f.type === "dir" && f.name === name.trim() &&
+      JSON.stringify(f.path) === JSON.stringify(CUR_DIR))) return toast("同名文件夹已存在");
+  meta.push({
+    id: "d_" + Math.random().toString(36).slice(2, 10),
+    name: name.trim(), type: "dir", size: 0, path: [...CUR_DIR],
+    uploaded: new Date().toISOString(), deleted: false
+  });
+  saveAll(); refreshFiles();
+}
+
+async function handleUpload(e) {
+  const files = [...e.target.files];
+  e.target.value = "";
+  if (!files.length) return;
+  await uploadFiles(files, []);
+  refreshFiles();
+}
+
+async function handleFolderUpload(e) {
+  const files = [...e.target.files];
+  e.target.value = "";
+  if (!files.length) return;
+  const dirs = new Set();
+  files.forEach(f => {
+    const p = f.webkitRelativePath.split("/");
+    p.pop();
+    for (let i = 1; i <= p.length; i++) {
+      dirs.add(p.slice(0, i).join("/"));
+    }
+  });
+  const meta = ensureFilesMeta(CURRENT_USER);
+  const first = [...dirs][0] || "";
+  const rootFolder = first.split("/")[0];
+  const basePath = [...CUR_DIR, rootFolder];
+  dirs.forEach(d => {
+    const parts = d.split("/");
+    const name = parts[parts.length - 1];
+    const pathParts = [...CUR_DIR, ...parts.slice(0, -1)];
+    if (!meta.some(f => !f.deleted && f.type === "dir" && f.name === name &&
+        JSON.stringify(f.path) === JSON.stringify(pathParts))) {
+      meta.push({
+        id: "d_" + Math.random().toString(36).slice(2, 10),
+        name, type: "dir", size: 0, path: pathParts,
+        uploaded: new Date().toISOString(), deleted: false
+      });
+    }
+  });
+  saveAll();
+  await uploadFiles(files, basePath);
+  refreshFiles();
+}
+
+async function uploadFiles(files, basePath) {
+  const u = CURRENT_USER;
+  const meta = ensureFilesMeta(u);
+  const coins = ensureCoins(u);
+  const quota = getQuota(coins.vip_level);
+  let used = meta.filter(f => !f.deleted && f.type === "file")
+                 .reduce((s, f) => s + (f.size||0), 0);
+  let success = 0, failed = 0;
+
+  const m = modal(`
+    <h3>⬆ 正在上传</h3>
+    <div id="upInfo" style="font-size:13px;margin-bottom:8px"></div>
+    <div class="progress"><div class="progress-bar" id="upBar" style="width:0%"></div></div>
+    <div id="upPct" style="text-align:right;font-size:12px;color:#8fa8c8;margin-top:6px">0%</div>
+  `);
+  const info = m.querySelector("#upInfo");
+  const bar = m.querySelector("#upBar");
+  const pct = m.querySelector("#upPct");
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    info.textContent = `(${i+1}/${files.length}) ${file.name}（${fmtSize(file.size)}）`;
+    if (quota.quota !== -1 && used + file.size > quota.quota) {
+      failed++;
+      continue;
+    }
+    try {
+      const id = "f_" + Math.random().toString(36).slice(2, 12);
+      await idbPut(id, file);
+      // 计算文件的相对路径
+      let path = [...basePath];
+      if (basePath.length > 0 && file.webkitRelativePath) {
+        const rel = file.webkitRelativePath.split("/");
+        rel.pop(); // 去掉文件名
+        // rel 首段是根文件夹名（已包含在 basePath 里），去掉它
+        path = [...CUR_DIR, ...rel];
+      }
+      meta.push({
+        id, name: file.name, type: "file", size: file.size,
+        path: path, uploaded: new Date().toISOString(),
+        deleted: false, deleted_at: ""
+      });
+      used += file.size;
+      success++;
+    } catch (err) {
+      console.error(err); failed++;
+    }
+    const p = Math.round((i+1) / files.length * 100);
+    bar.style.width = p + "%";
+    pct.textContent = p + "%";
+  }
+  saveAll();
+  m.remove();
+  addTransfer("upload", `${success} 个文件`, 0);
+  toast(`上传完成：成功 ${success}，失败 ${failed}`);
+}
+
+async function downloadFile(f) {
+  const blob = await idbGet(f.id);
+  if (!blob) return toast("文件不存在");
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = f.name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  addTransfer("download", f.name, f.size);
+  toast("已开始下载");
+  refreshTransfers();
+}
+
+function shareFile(f) {
+  const code = prompt("自定义分享码（字母数字）：");
+  if (!code || !/^[A-Za-z0-9]+$/.test(code)) return toast("分享码只能是字母数字");
+  const upper = code.toUpperCase();
+  if (DATA.shares[upper]) return toast("该分享码已存在");
+  const days = parseInt(prompt("有效期（天，-1 表示永久）：", "30"));
+  if (isNaN(days)) return toast("请输入天数");
+  const expire = days === -1 ? "" : new Date(Date.now() + days * 86400000).toISOString();
+  DATA.shares[upper] = {
+    owner: CURRENT_USER, file_id: f.id, filename: f.name, size: f.size,
+    created: new Date().toISOString(), expire_at: expire
+  };
+  saveAll();
+  modal(`
+    <h3>🔗 分享成功</h3>
+    <div style="text-align:center;padding:16px 0">
+      <div style="color:#aaa;font-size:12px;margin-bottom:8px">分享码</div>
+      <div style="font-size:28px;font-weight:bold;color:#00b4ff;letter-spacing:4px">${upper}</div>
+      <div style="color:#aaa;font-size:12px;margin-top:12px">
+        有效期：${days === -1 ? "永久" : days + " 天"}
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end">
+      <button class="btn" onclick="navigator.clipboard.writeText('${upper}');toast('已复制')">复制分享码</button>
+    </div>
+  `);
+  refreshShares();
+}
+
+function renameFile(f) {
+  const n = prompt("新名称：", f.name);
+  if (!n || !n.trim()) return;
+  const meta = ensureFilesMeta(CURRENT_USER);
+  const t = meta.find(x => x.id === f.id);
+  if (t) { t.name = n.trim(); saveAll(); refreshFiles(); toast("已重命名"); }
+}
+
+function deleteFile(f) {
+  if (!confirm(`删除「${f.name}」？将移至回收站`)) return;
+  const meta = ensureFilesMeta(CURRENT_USER);
+  const t = meta.find(x => x.id === f.id);
+  if (t) { t.deleted = true; t.deleted_at = new Date().toISOString(); saveAll(); refreshFiles(); toast("已移至回收站"); }
+}
+
+// ==================== 传输记录 ====================
+function addTransfer(type, name, size) {
+  if (!DATA.transfers[CURRENT_USER]) DATA.transfers[CURRENT_USER] = [];
+  DATA.transfers[CURRENT_USER].unshift({
+    type, name, size, time: new Date().toISOString()
+  });
+  DATA.transfers[CURRENT_USER] = DATA.transfers[CURRENT_USER].slice(0, 200);
+  saveAll();
+}
+function refreshTransfers() {
+  const tbody = document.querySelector("#transferTable tbody");
+  tbody.innerHTML = "";
+  const items = (DATA.transfers[CURRENT_USER] || []);
+  if (!items.length) { tbody.innerHTML = `<tr><td colspan="4" class="empty">暂无记录</td></tr>`; return; }
+  items.forEach(t => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${t.type === "upload" ? "⬆ 上传" : "⬇ 下载"}</td>
+      <td>${escHtml(t.name)}</td>
+      <td>${t.size ? fmtSize(t.size) : "—"}</td>
+      <td>${(t.time||"").slice(0,19).replace("T"," ")}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+function clearTransfers() {
+  if (!confirm("清空传输记录？")) return;
+  DATA.transfers[CURRENT_USER] = [];
+  saveAll(); refreshTransfers();
+}
+
+// ==================== 分享 ====================
+function refreshShares() {
+  const tbody = document.querySelector("#shareTable tbody");
+  tbody.innerHTML = "";
+  const shares = Object.entries(DATA.shares || {})
+    .filter(([c, s]) => s.owner === CURRENT_USER);
+  if (!shares.length) { tbody.innerHTML = `<tr><td colspan="4" class="empty">暂无分享</td></tr>`; return; }
+  shares.forEach(([code, s]) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="color:#00b4ff;font-weight:bold">${code}</td>
+      <td>${escHtml(s.filename)}</td>
+      <td>${(s.created||"").slice(0,19).replace("T"," ")}</td>
+      <td></td>
+    `;
+    tr.children[3].appendChild(mkBtn("取消", () => {
+      if (!confirm("取消该分享？")) return;
+      delete DATA.shares[code]; saveAll(); refreshShares();
+    }, "btn-danger"));
+    tbody.appendChild(tr);
+  });
+}
+async function useShareCode() {
+  const code = document.getElementById("shareCodeInput").value.trim().toUpperCase();
+  if (!code) return toast("请输入分享码");
+  const s = DATA.shares[code];
+  if (!s) return toast("分享码不存在");
+  if (s.expire_at && new Date() > new Date(s.expire_at)) return toast("分享已过期");
+  if (s.owner === CURRENT_USER) return toast("不能接收自己的分享");
+  if (!CURRENT_USER) return toast("请先登录");
+  // 从分享者的文件里找
+  const ownerMeta = DATA.filesMeta[s.owner] || [];
+  const src = ownerMeta.find(f => f.id === s.file_id);
+  if (!src) return toast("源文件不存在");
+  const blob = await idbGet(s.file_id);
+  if (!blob) return toast("源文件数据不存在");
+  // 复制到自己根目录
+  const id = "f_" + Math.random().toString(36).slice(2, 12);
+  await idbPut(id, blob);
+  const myMeta = ensureFilesMeta(CURRENT_USER);
+  const coins = ensureCoins(CURRENT_USER);
+  const quota = getQuota(coins.vip_level);
+  const used = myMeta.filter(f => !f.deleted && f.type === "file")
+                     .reduce((sum, f) => sum + (f.size||0), 0);
+  if (quota.quota !== -1 && used + (src.size||0) > quota.quota) return toast("你的容量不足");
+  myMeta.push({
+    id, name: src.name, type: "file", size: src.size || 0,
+    path: [], uploaded: new Date().toISOString(),
+    deleted: false, deleted_at: "", from_share: code
+  });
+  saveAll();
+  document.getElementById("shareCodeInput").value = "";
+  toast("接收成功，已存到你的云盘根目录");
+  refreshAll();
+}
+
+// ==================== 回收站 ====================
+function refreshTrash() {
+  const tbody = document.querySelector("#trashTable tbody");
+  tbody.innerHTML = "";
+  const meta = ensureFilesMeta(CURRENT_USER);
+  const dels = meta.filter(f => f.deleted);
+  if (!dels.length) { tbody.innerHTML = `<tr><td colspan="4" class="empty">回收站为空</td></tr>`; return; }
+  dels.forEach(f => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${escHtml(f.name)}</td>
+      <td>${f.type === "dir" ? "—" : fmtSize(f.size||0)}</td>
+      <td>${(f.deleted_at||"").slice(0,19).replace("T"," ")}</td>
+      <td></td>
+    `;
+    tr.children[3].appendChild(mkBtn("还原", () => {
+      f.deleted = false; f.deleted_at = "";
+      saveAll(); refreshTrash(); refreshFiles(); toast("已还原");
+    }));
+    tr.children[3].appendChild(mkBtn("彻底删除", async () => {
+      if (!confirm(`彻底删除「${f.name}」？不可恢复`)) return;
+      if (f.type === "file") await idbDel(f.id);
+      DATA.filesMeta[CURRENT_USER] = meta.filter(x => x.id !== f.id);
+      saveAll(); refreshTrash(); refreshAll(); toast("已删除");
+    }, "btn-danger"));
+    tbody.appendChild(tr);
+  });
+}
+function emptyTrash() {
+  const meta = ensureFilesMeta(CURRENT_USER);
+  const dels = meta.filter(f => f.deleted);
+  if (!dels.length) return toast("回收站已空");
+  if (!confirm(`清空回收站？${dels.length} 个文件将被永久删除`)) return;
+  dels.forEach(async f => { if (f.type === "file") await idbDel(f.id); });
+  DATA.filesMeta[CURRENT_USER] = meta.filter(x => !x.deleted);
+  saveAll(); refreshTrash(); refreshAll(); toast("已清空");
+}
+
+// ==================== 任务中心 ====================
+const TASKS = [
+  {cat:"签到", name:"每日签到", reward:100, once:true, key:"daily_sign"},
+  {cat:"上传", name:"上传第1个文件", reward:200, once:true, key:"upload_1"},
+  {cat:"上传", name:"累计上传10个文件", reward:500, once:true, key:"upload_10"},
+  {cat:"下载", name:"下载第1个文件", reward:100, once:true, key:"download_1"},
+  {cat:"下载", name:"累计下载10个文件", reward:400, once:true, key:"download_10"},
+  {cat:"分享", name:"分享第1个文件", reward:200, once:true, key:"share_1"},
+  {cat:"分享", name:"累计分享5个文件", reward:800, once:true, key:"share_5"},
+  {cat:"互动", name:"打开任务中心", reward:50, once:true, key:"visit_task"},
+  {cat:"互动", name:"给软件评分", reward:300, once:true, key:"rate"},
+  {cat:"邀请", name:"邀请1个好友", reward:800, once:true, key:"invite_1"},
+];
+function renderTasks() {
+  const coins = ensureCoins(CURRENT_USER);
+  const dailyLimit = 15000;
+  document.getElementById("taskProgress").textContent =
+    `今日已赚 ${coins.today_earned} / ${dailyLimit} 金币`;
+  const list = document.getElementById("taskList");
+  list.innerHTML = "";
+  // 分类
+  const cats = [...new Set(TASKS.map(t => t.cat))];
+  cats.forEach(cat => {
+    const h = document.createElement("h3");
+    h.textContent = cat;
+    h.style.cssText = "margin:16px 0 8px;color:#00b4ff;font-size:14px";
+    list.appendChild(h);
+    TASKS.filter(t => t.cat === cat).forEach(t => {
+      const done = coins.done_once.includes(t.key);
+      const div = document.createElement("div");
+      div.className = "task-item";
+      div.innerHTML = `
+        <div class="info">
+          <div style="font-weight:bold">${t.name}</div>
+          <div style="color:#8fa8c8;font-size:12px">${done ? "✅ 已完成" : "可领取"}</div>
+        </div>
+        <div class="reward">+${t.reward}</div>
+      `;
+      const btn = mkBtn(done ? "已领取" : "领取", () => claimTask(t));
+      if (done) btn.disabled = true;
+      div.appendChild(btn);
+      list.appendChild(div);
+    });
+  });
+}
+function claimTask(t) {
+  const coins = ensureCoins(CURRENT_USER);
+  if (coins.done_once.includes(t.key)) return toast("已领取");
+  // 简单校验
+  if (t.key === "upload_1") {
+    const meta = ensureFilesMeta(CURRENT_USER);
+    if (!meta.some(f => f.type === "file" && !f.deleted)) return toast("未完成");
+  }
+  if (t.key === "upload_10") {
+    const meta = ensureFilesMeta(CURRENT_USER);
+    if (meta.filter(f => f.type === "file" && !f.deleted).length < 10) return toast("未完成");
+  }
+  if (t.key === "share_1") {
+    const shares = Object.values(DATA.shares || {}).filter(s => s.owner === CURRENT_USER);
+    if (shares.length < 1) return toast("未完成");
+  }
+  const dailyLimit = 15000;
+  if (coins.today_earned + t.reward > dailyLimit) return toast("已达今日上限");
+  coins.user_coins += t.reward;
+  coins.today_earned += t.reward;
+  coins.done_once.push(t.key);
+  coins.history.push({time:new Date().toISOString(), task:t.name, reward:t.reward});
+  saveAll(); refreshAll(); renderTasks();
+  toast(`+${t.reward} 金币`);
+}
+
+// ==================== 反馈 ====================
+function submitFeedback(type) {
+  const m = modal(`
+    <h3>提交${type}</h3>
+    <input class="inp" id="fbTitle" placeholder="标题" style="margin-bottom:8px">
+    <textarea class="inp" id="fbContent" placeholder="详细描述" rows="5" style="margin-bottom:8px;resize:vertical"></textarea>
+    <input class="inp" id="fbContact" placeholder="联系方式（选填）" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn" onclick="this.closest('.modal').remove()">取消</button>
+      <button class="btn btn-primary" onclick="doSubmitFeedback('${type}')">提交</button>
+    </div>
+  `);
+}
+function doSubmitFeedback(type) {
+  const title = document.getElementById("fbTitle").value.trim();
+  const content = document.getElementById("fbContent").value.trim();
+  const contact = document.getElementById("fbContact").value.trim();
+  if (!title || !content) return toast("请填写完整");
+  DATA.feedbacks.push({
+    type, user: CURRENT_USER, title, content, contact,
+    status: "待审核", reward: 0, time: new Date().toISOString()
+  });
+  saveAll();
+  document.querySelector(".modal")?.remove();
+  toast("已提交，等待管理员审核");
+  renderFeedbacks();
+}
+function renderFeedbacks() {
+  const list = document.getElementById("feedbackList");
+  list.innerHTML = "";
+  const items = DATA.feedbacks.filter(f => f.user === CURRENT_USER).reverse();
+  if (!items.length) {
+    list.innerHTML = `<div class="empty">还没有提交过反馈</div>`;
+    return;
+  }
+  items.forEach(f => {
+    const card = document.createElement("div");
+    card.className = "card";
+    let tag = "";
+    if (f.status === "审核通过") tag = `<span class="tag tag-green">已通过 +${f.reward}</span>`;
+    else if (f.status === "已拒绝") tag = `<span class="tag tag-red">已拒绝</span>`;
+    else tag = `<span class="tag tag-yellow">待审核</span>`;
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <b>[${f.type}] ${escHtml(f.title)}</b>${tag}
+      </div>
+      <p style="color:#ccc;font-size:13px;margin-bottom:6px">${escHtml(f.content)}</p>
+      <div style="color:#666;font-size:11px">${(f.time||"").slice(0,19).replace("T"," ")}</div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+// ==================== VIP ====================
+let VIP_TAB = "VIP";
+function switchVipTab(t) { VIP_TAB = t; renderVip(); }
+function renderVip() {
+  const coins = ensureCoins(CURRENT_USER);
+  document.getElementById("vipInfo").textContent =
+    `当前金币：${coins.user_coins.toLocaleString()}  |  身份：${coins.vip_level}`;
+  document.getElementById("tabVIP").style.background = VIP_TAB === "VIP" ? "#00b4ff" : "";
+  document.getElementById("tabSVIP").style.background = VIP_TAB === "SVIP" ? "#ffcc00" : "";
+  document.getElementById("tabSVIP").style.color = VIP_TAB === "SVIP" ? "#000" : "";
+  const list = document.getElementById("vipList");
+  list.innerHTML = "";
+  const prefix = VIP_TAB + " ";
+  for (let i = 1; i <= 10; i++) {
+    const level = prefix + i;
+    const info = QUOTA[level];
+    if (!info) continue;
+    const card = document.createElement("div");
+    card.className = "vip-card" + (VIP_TAB === "SVIP" ? " svip" : "");
+    const isCur = coins.vip_level === level;
+    card.innerHTML = `
+      <h4>${level} ${isCur ? '<span class="tag tag-green">当前</span>' : ""}</h4>
+      <div style="font-size:12px;color:#aaa">📦 ${fmtSize(info.quota)}</div>
+      <div style="font-size:12px;color:#aaa">⚡ ${speedStr(info.speed)}</div>
+      <div class="price">💰 ${info.price.toLocaleString()}</div>
+    `;
+    const btn = mkBtn(isCur ? "当前等级" : "升级", () => upgradeVip(level, info.price), "btn-primary");
+    if (isCur) btn.disabled = true;
+    card.appendChild(btn);
+    list.appendChild(card);
+  }
+}
+function upgradeVip(level, price) {
+  const coins = ensureCoins(CURRENT_USER);
+  if (coins.user_coins < price) return toast(`金币不足，还差 ${(price - coins.user_coins).toLocaleString()}`);
+  if (!confirm(`确定花 ${price.toLocaleString()} 金币升级到 ${level}？`)) return;
+  coins.user_coins -= price;
+  coins.vip_level = level;
+  coins.history.push({time:new Date().toISOString(), task:`升级 ${level}`, reward:-price});
+  saveAll(); refreshAll(); renderVip();
+  toast(`升级成功：${level}`);
+}
+
+// ==================== 关于 & 管理员入口 ====================
+function renderVersions() {
+  const list = document.getElementById("versionList");
+  list.innerHTML = "";
+  VERSION_HISTORY.slice().reverse().forEach(v => {
+    const d = document.createElement("div");
+    d.className = "version-item";
+    d.innerHTML = `<h4>${v.v}</h4><p>${v.d}</p>`;
+    list.appendChild(d);
+  });
+  // 绑定连点 5 次
+  let clickCount = 0;
+  let clickTimer = null;
+  const title = document.getElementById("adminVersionTitle");
+  title.onclick = () => {
+    clickCount++;
+    if (clickTimer) clearTimeout(clickTimer);
+    clickTimer = setTimeout(() => { clickCount = 0; }, 1500);
+    if (clickCount >= 5) {
+      clickCount = 0;
+      if (clickTimer) clearTimeout(clickTimer);
+      openAdminLogin();
+    }
+  };
+}
+
+// 管理员登录
+function openAdminLogin() {
+  const m = modal(`
+    <h3>🔒 管 理 员 登 录</h3>
+    <div class="hint">请输入管理员密码</div>
+    <input class="inp" id="adminPwd" type="password" placeholder="密码" style="margin-bottom:12px">
+    <div style="display:flex;gap:8px">
+      <button class="btn" style="flex:1" onclick="this.closest('.modal').remove()">取消</button>
+      <button class="btn" style="flex:1" onclick="doAdminLogin()">登 录</button>
+    </div>
+  `, "admin-dark");
+  const pwd = m.querySelector("#adminPwd");
+  pwd.focus();
+  pwd.onkeydown = e => { if (e.key === "Enter") doAdminLogin(); };
+}
+function doAdminLogin() {
+  const pwd = document.getElementById("adminPwd").value;
+  if (pwd !== ADMIN_PWD) return toast("密码错误");
+  document.querySelector(".modal")?.remove();
+  openAdminPanel();
+}
+
+// ==================== 管理员后台 ====================
+function openAdminPanel() {
+  const users = loadUsers();
+  const userRows = Object.keys(users).map(u => {
+    const c = DATA.coins[u] || {};
+    const files = (DATA.filesMeta[u] || []).filter(f => !f.deleted && f.type === "file");
+    const used = files.reduce((s, f) => s + (f.size || 0), 0);
+    return {u, coins: c.user_coins || 0, level: c.vip_level || "免费用户", files: files.length, used};
+  });
+  const userHtml = userRows.map(r => `
+    <tr>
+      <td>${escHtml(r.u)}</td>
+      <td>${r.coins.toLocaleString()}</td>
+      <td>${r.level}</td>
+      <td>${r.files}</td>
+      <td>${fmtSize(r.used)}</td>
+      <td>
+        <button class="btn" style="padding:4px 8px;font-size:11px" onclick="adminAddCoins('${r.u}')">加金币</button>
+        <button class="btn" style="padding:4px 8px;font-size:11px" onclick="adminSetLevel('${r.u}')">改等级</button>
+        <button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="adminDelUser('${r.u}')">删除</button>
+      </td>
+    </tr>
+  `).join("");
+
+  const feedbackPending = DATA.feedbacks.filter(f => f.status === "待审核");
+  const fbHtml = feedbackPending.map((f, i) => `
+    <tr>
+      <td>${escHtml(f.user)}</td>
+      <td>${f.type}</td>
+      <td>${escHtml(f.title)}</td>
+      <td>
+        <button class="btn" style="padding:4px 8px;font-size:11px" onclick="adminReviewFeedback(${DATA.feedbacks.indexOf(f)}, true)">通过</button>
+        <button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="adminReviewFeedback(${DATA.feedbacks.indexOf(f)}, false)">拒绝</button>
+      </td>
+    </tr>
+  `).join("") || `<tr><td colspan="4" class="empty">暂无待审核反馈</td></tr>`;
+
+  const m = modal(`
+    <h3 style="color:#00b4ff;text-align:left;letter-spacing:0">🛠️ 管理员后台</h3>
+    <div class="row" style="margin-bottom:12px">
+      <button class="btn btn-primary" onclick="adminTab(this,'users')">👥 用户</button>
+      <button class="btn" onclick="adminTab(this,'feedback')">📬 反馈审核</button>
+      <button class="btn" onclick="adminTab(this,'announce')">📢 公告</button>
+      <button class="btn" onclick="adminTab(this,'tools')">🔧 工具</button>
+      <button class="btn btn-danger" style="margin-left:auto" onclick="this.closest('.modal').remove()">关闭</button>
+    </div>
+
+    <div class="admin-sec" data-sec="users">
+      <table><thead><tr><th>用户名</th><th>金币</th><th>等级</th><th>文件数</th><th>已用</th><th>操作</th></tr></thead>
+      <tbody>${userHtml || `<tr><td colspan="6" class="empty">暂无用户</td></tr>`}</tbody></table>
+    </div>
+
+    <div class="admin-sec hide" data-sec="feedback">
+      <p style="color:#aaa;font-size:12px;margin-bottom:8px">审核通过将自动发放金币给用户</p>
+      <table><thead><tr><th>用户</th><th>类型</th><th>标题</th><th>操作</th></tr></thead>
+      <tbody>${fbHtml}</tbody></table>
+    </div>
+
+    <div class="admin-sec hide" data-sec="announce">
+      <p style="color:#aaa;font-size:12px;margin-bottom:8px">设置弹窗公告，用户下次登录时弹出</p>
+      <label style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+        <input type="checkbox" id="annEnabled"> 启用公告
+      </label>
+      <input class="inp" id="annTitle" placeholder="标题" style="margin-bottom:8px">
+      <textarea class="inp" id="annText" placeholder="内容" rows="4" style="margin-bottom:8px;resize:vertical"></textarea>
+      <button class="btn btn-primary" onclick="saveAnnounce()">保存公告</button>
+    </div>
+
+    <div class="admin-sec hide" data-sec="tools">
+      <div class="row">
+        <button class="btn" onclick="adminAllCoins()">💰 所有用户 +1000 金币</button>
+        <button class="btn" onclick="adminClearAllFiles()">🗑 清空所有用户文件</button>
+        <button class="btn btn-danger" onclick="adminFactoryReset()">⚠ 恢复出厂</button>
+      </div>
+      <div id="adminLogs" style="margin-top:12px;max-height:240px;overflow:auto;font-size:12px;color:#aaa">
+        ${(DATA.logs || []).slice(-20).reverse().map(l => `<div>${l}</div>`).join("") || "暂无日志"}
+      </div>
+    </div>
+  `);
+
+  // 初始化公告表单
+  setTimeout(() => {
+    const a = JSON.parse(localStorage.getItem("cloud_announce") || "{}");
+    const en = document.getElementById("annEnabled");
+    const ti = document.getElementById("annTitle");
+    const tx = document.getElementById("annText");
+    if (en) en.checked = !!a.enabled;
+    if (ti) ti.value = a.title || "";
+    if (tx) tx.value = a.text || "";
+  }, 0);
+}
+function adminTab(btn, sec) {
+  document.querySelectorAll(".admin-sec").forEach(s => {
+    s.classList.toggle("hide", s.dataset.sec !== sec);
+  });
+}
+function adminAddCoins(u) {
+  const n = parseInt(prompt(`给 ${u} 加多少金币？`, "1000"));
+  if (isNaN(n)) return;
+  const c = DATA.coins[u]; if (!c) return toast("无此用户");
+  c.user_coins += n;
+  c.history.push({time:new Date().toISOString(), task:"管理员加币", reward:n});
+  saveAll(); toast(`已加 ${n}`);
+  document.querySelector(".modal")?.remove();
+  openAdminPanel();
+}
+function adminSetLevel(u) {
+  const lv = prompt(`设置 ${u} 的等级：\n可选：${Object.keys(QUOTA).join("、")}`);
+  if (!lv || !QUOTA[lv]) return toast("等级不存在");
+  const c = DATA.coins[u]; if (!c) return;
+  c.vip_level = lv;
+  saveAll(); toast(`已设为 ${lv}`);
+  document.querySelector(".modal")?.remove();
+  openAdminPanel();
+}
+function adminDelUser(u) {
+  if (!confirm(`删除用户 ${u}？所有数据将被清除`)) return;
+  const users = loadUsers(); delete users[u]; saveUsers(users);
+  delete DATA.coins[u]; delete DATA.filesMeta[u];
+  delete DATA.transfers[u];
+  DATA.shares = Object.fromEntries(Object.entries(DATA.shares).filter(([c, s]) => s.owner !== u));
+  saveAll(); toast("已删除");
+  document.querySelector(".modal")?.remove();
+  openAdminPanel();
+}
+function adminReviewFeedback(idx, pass) {
+  const f = DATA.feedbacks[idx];
+  if (!f) return;
+  if (pass) {
+    const reward = f.type === "BUG" ? 1200 : 800;
+    f.status = "审核通过"; f.reward = reward;
+    const c = DATA.coins[f.user]; if (c) {
+      c.user_coins += reward;
+      c.history.push({time:new Date().toISOString(), task:`反馈奖励 ${f.type}`, reward});
+    }
+    toast(`已通过，发放 ${reward} 金币`);
+  } else {
+    f.status = "已拒绝";
+    toast("已拒绝");
+  }
+  saveAll();
+  document.querySelector(".modal")?.remove();
+  openAdminPanel();
+}
+function saveAnnounce() {
+  const a = {
+    enabled: document.getElementById("annEnabled").checked,
+    title: document.getElementById("annTitle").value.trim() || "公告",
+    text: document.getElementById("annText").value.trim()
+  };
+  localStorage.setItem("cloud_announce", JSON.stringify(a));
+  toast("公告已保存");
+}
+function adminAllCoins() {
+  const n = 1000;
+  if (!confirm(`给所有用户 +${n} 金币？`)) return;
+  Object.values(DATA.coins).forEach(c => {
+    c.user_coins += n;
+    c.history.push({time:new Date().toISOString(), task:"管理员群发", reward:n});
+  });
+  saveAll(); toast("已发放");
+}
+async function adminClearAllFiles() {
+  if (!confirm("清空所有用户的文件？不可恢复")) return;
+  const keys = Object.keys(DATA.filesMeta);
+  for (const u of keys) {
+    for (const f of DATA.filesMeta[u]) {
+      if (f.type === "file") await idbDel(f.id);
+    }
+    DATA.filesMeta[u] = [];
+  }
+  DATA.shares = {};
+  saveAll(); toast("已清空");
+}
+function adminFactoryReset() {
+  if (!confirm("恢复出厂设置？所有数据将被清除")) return;
+  if (!confirm("再次确认：真的清除吗？")) return;
+  localStorage.clear();
+  indexedDB.deleteDatabase(DB_NAME);
+  location.reload();
+}
+
+// ==================== 设置 ====================
+function changePassword() {
+  const oldP = prompt("旧密码：");
+  if (!oldP) return;
+  const users = loadUsers();
+  if (!users[CURRENT_USER] || users[CURRENT_USER].password !== oldP) return toast("旧密码错误");
+  const newP = prompt("新密码（至少3位）：");
+  if (!newP || newP.length < 3) return toast("密码太短");
+  users[CURRENT_USER].password = newP;
+  saveUsers(users);
+  toast("密码已修改");
+}
+function deleteAccount() {
+  if (!confirm(`注销账号「${CURRENT_USER}」？所有数据将被删除`)) return;
+  const u = CURRENT_USER;
+  const users = loadUsers(); delete users[u]; saveUsers(users);
+  delete DATA.coins[u]; delete DATA.filesMeta[u]; delete DATA.transfers[u];
+  DATA.shares = Object.fromEntries(Object.entries(DATA.shares).filter(([c, s]) => s.owner !== u));
+  saveAll();
+  doLogout();
+  toast("已注销");
+}
+
+// ==================== 账户菜单 ====================
+function showAccountMenu() {
+  if (!CURRENT_USER) return;
+  const c = ensureCoins(CURRENT_USER);
+  modal(`
+    <h3>👤 ${CURRENT_USER}</h3>
+    <p>🎖 等级：${c.vip_level}</p>
+    <p>💰 金币：${c.user_coins.toLocaleString()}</p>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" onclick="this.closest('.modal').remove();doLogout()">退出登录</button>
+    </div>
+  `);
+}
+
+// ==================== 公告弹窗 ====================
+function checkAnnounce() {
+  try {
+    const a = JSON.parse(localStorage.getItem("cloud_announce") || "{}");
+    if (!a.enabled || !a.text) return;
+    if (sessionStorage.getItem("ann_shown") === "1") return;
+    sessionStorage.setItem("ann_shown", "1");
+    modal(`
+      <h3>📢 ${escHtml(a.title || "公告")}</h3>
+      <p style="white-space:pre-wrap;color:#ccc">${escHtml(a.text)}</p>
+      <div style="text-align:right;margin-top:16px">
+        <button class="btn btn-primary" onclick="this.closest('.modal').remove()">知道了</button>
+      </div>
+    `);
+  } catch (e) {}
+}
+
+// ==================== 自动登录 ====================
+window.addEventListener("DOMContentLoaded", async () => {
+  await openDB();
+  if (CURRENT_USER && loadUsers()[CURRENT_USER]) {
+    ensureCoins(CURRENT_USER);
+    ensureFilesMeta(CURRENT_USER);
+    enterApp();
+  }
+});
+</script>
+</body>
+</html>
